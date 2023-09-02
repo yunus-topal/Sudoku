@@ -304,4 +304,19 @@ public class GameManager : MonoBehaviour
             t.color = numberColor;
         }
     }
+
+    public void EraseNumber()
+    {
+        if (canBeChanged && highlightButton.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text != "")
+        {
+            highlightButton.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = "";
+            HighlightButton(highlightButton);
+            
+            Tuple<int, int> tuple = GetButtonIndices(highlightButton.gameObject);
+            sudoku[tuple.Item1][tuple.Item2] = 0;
+            placedCount--;
+            
+            SaveGame();
+        }
+    }
 }
