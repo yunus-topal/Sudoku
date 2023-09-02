@@ -7,8 +7,13 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    private float elapsedTime = 0f;
+    public TMP_Text timeText;
+    
     private int placedCount = 0;
+
     private int fontSize = 48;
+    public TMP_FontAsset numberFont;
     private Color numberColor = Color.blue;
     private Color fixedNumberColor = Color.black;
     
@@ -68,12 +73,33 @@ public class GameManager : MonoBehaviour
                 t.text = sudoku[i][j].ToString();
                 t.fontSize = fontSize;
                 t.color = fixedNumberColor;
+                t.font = numberFont;
 
                 placedCount++;
             }
         }
     }
 
+    private void Update()
+    {
+        elapsedTime += Time.deltaTime;
+        timeText.text = ConvertTime(elapsedTime);
+    }
+
+    private string ConvertTime(float f)
+    {
+        int x = (int) f;
+        int seconds = x % 60;
+        int total_minutes = x / 60;
+        int minutes = total_minutes % 60;
+        int hours = total_minutes / 60;
+
+        string sec = (seconds >= 10) ? seconds.ToString() : "0" + seconds;
+        string min = minutes >= 10 ? minutes.ToString() : "0" + minutes;
+        if (hours == 0) return $"{min}:{sec}";
+        
+        return $"{hours}:{min}:{sec}";
+    }
 
     private Tuple<int,int> GetButtonIndices(GameObject b)
     {
@@ -138,6 +164,7 @@ public class GameManager : MonoBehaviour
             
             t.text = b.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text;
             t.fontSize = fontSize;
+            t.font = numberFont;
             t.color = numberColor;
             HighlightButton(highlightButton);
             
