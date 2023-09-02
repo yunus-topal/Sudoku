@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DefaultNamespace;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,8 +28,9 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        int numCount = 40 - GameState.gameMode * 5;
         _sudokuLogic = gameObject.AddComponent<SudokuLogic>();
-        Tuple<List<List<int>>, List<List<int>>> tuple = _sudokuLogic.GenerateSudoku(40);
+        Tuple<List<List<int>>, List<List<int>>> tuple = _sudokuLogic.GenerateSudoku(numCount);
         sudoku = tuple.Item1;
         board = tuple.Item2;
         
