@@ -6,6 +6,13 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    private int placedCount = 0;
+    private int fontSize = 48;
+    private Color numberColor = Color.blue;
+    private Color fixedNumberColor = Color.black;
+    
+    private Button highlightButton;
+    private bool canBeChanged = true;
     private Color highlightColor = new Color(0.2f, 1f, 1f, 1f);
     private Color sameNumColor = new Color(0.75f, 1f, 1f, 1f);
     
@@ -49,27 +56,40 @@ public class GameManager : MonoBehaviour
         {
             for (int j = 0; j < sudoku[i].Count; j++)
             {
-                if(sudoku[i][j] == 0) continue;
-                
-                boxFlags[i][j] = true;
+                if (sudoku[i][j] == 0)
+                {
+                    boxFlags[i][j] = true;
+                    continue;
+                }
 
                 TextMeshProUGUI t = boxes[i][j].transform.GetChild(0).GetComponent<TextMeshProUGUI>();
                 t.text = sudoku[i][j].ToString();
-                t.fontSize = 48;
-                t.color = Color.black;
+                t.fontSize = fontSize;
+                t.color = fixedNumberColor;
+
+                placedCount++;
             }
         }
     }
 
 
-    public void HighlightButton(Button b)
+    private Tuple<int,int> GetButtonIndices(GameObject b)
     {
-        string num = b.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text;
-        if (num.Length != 0) HighlightSameColors(num);
-        else ClearBoard();
-        b.GetComponent<Image>().color = highlightColor;
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                if (boxes[i][j].Equals(b))
+                {
+                    Debug.Log($"found index {i}, {j}");
+                    return new Tuple<int, int>(i, j);
+                }
+            }
+        }
+        // should not be reachable
+        return new Tuple<int, int>(0,0);
     }
-
+    
     private void HighlightSameColors(string number)
     {
         foreach (List<GameObject> box in boxes)
@@ -93,5 +113,52 @@ public class GameManager : MonoBehaviour
             }
         }
     }
- 
+    
+    public void HighlightButton(Button b)
+    {
+        highlightButton = b;
+        Tuple<int, int> t = GetButtonIndices(b.gameObject);
+        canBeChanged = boxFlags[t.Item1][t.Item2];
+        
+        string num = b.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text;
+        if (num.Length != 0) HighlightSameColors(num);
+        else ClearBoard();
+        b.GetComponent<Image>().color = highlightColor;
+    }
+    
+
+    public void PutNumber(Button b)
+    {
+        if (canBeChanged)
+        {
+            TextMeshProUGUI t = highlightButton.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
+            if (t.text == "") placedCount++;
+            
+            t.text = b.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text;
+            t.fontSize = fontSize;
+            t.color = numberColor;
+            HighlightButton(highlightButton);
+            
+            if(placedCount == 81) CheckGameState();
+
+        }
+    }
+
+    private void CheckGameState()
+    {
+        Debug.Log("board is filled. Checking results...");
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                if (boxes[i][j].transform.GetChild(0).GetComponent<TextMeshProUGUI>().text != board[i][j].ToString())
+                {
+                    Debug.Log("user did not filled the board correctly.");
+                    return;
+                }
+            }
+        }
+        Debug.Log("Congratulations. Game is over");
+    }
+
 }
