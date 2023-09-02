@@ -8,8 +8,5 @@ namespace DefaultNamespace
 
         public static int gameMode = 0;
 
-        public static List<List<int>> board = new List<List<int>>();
-        public static List<List<int>> boardState = new List<List<int>>();
-
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using DefaultNamespace;
@@ -8,6 +9,15 @@ using UnityEngine.UI;
 
 public class MenuManager : MonoBehaviour
 {
+    public Button continueButton;
+    private void Start()
+    {
+        if (PlayerPrefs.HasKey("sudoku"))
+        {
+            continueButton.interactable = true;
+        }
+    }
+
     public void LoadNewGame(Button b)
     {
         GameState.newGame = true;
@@ -32,9 +42,10 @@ public class MenuManager : MonoBehaviour
 
     public void ContinueGame()
     {
+        //Debug.Log(PlayerPrefs.GetString("sudoku"));
+        //Debug.Log(PlayerPrefs.GetString("board"));
+        //Debug.Log(PlayerPrefs.GetFloat("Time"));
         GameState.newGame = false;
-        // todo: get old board and sudoku state and load into GameState
-        
         SceneManager.LoadScene("GameScene");
     }
     

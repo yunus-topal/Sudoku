@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DefaultNamespace;
 using TMPro;
 using UnityEngine;
@@ -8,6 +9,7 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     private float elapsedTime = 0f;
+    private int lastSaveTime = 1;
     public TMP_Text timeText;
     
     private int placedCount = 0;
@@ -34,18 +36,36 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         int numCount = 40 - GameState.gameMode * 5;
-        _sudokuLogic = gameObject.AddComponent<SudokuLogic>();
-        Tuple<List<List<int>>, List<List<int>>> tuple = _sudokuLogic.GenerateSudoku(numCount);
-        sudoku = tuple.Item1;
-        board = tuple.Item2;
+
+        if (GameState.newGame)
+        {
+            _sudokuLogic = gameObject.AddComponent<SudokuLogic>();
+            Tuple<List<List<int>>, List<List<int>>> tuple = _sudokuLogic.GenerateSudoku(numCount);
+            sudoku = tuple.Item1;
+            board = tuple.Item2;
+            
+            for (int i = 0; i < 9; i++)
+            {
+                List<bool> b = new();
+                boxFlags.Add(b);
+                for (int j = 0; j < 9; j++)
+                {
+                    boxFlags[i].Add(sudoku[i][j] == 0);
+                }
+            }
         
+            SaveGame();
+        }
+        else
+        {
+            LoadGame();
+        }
+
         buttons = GameObject.FindGameObjectWithTag("buttons");
         for (int i = 0; i < 9; i++)
         {
             List<GameObject> l = new List<GameObject>();
-            List<bool> b = new();
             boxes.Add(l);
-            boxFlags.Add(b);
         }
         
         for (int i = 0; i < buttons.transform.childCount; i++)
@@ -55,7 +75,6 @@ public class GameManager : MonoBehaviour
             {
                 int row = (i - i % 3)  + j / 3;
                 boxes[row].Add(box.transform.GetChild(j).gameObject);
-                boxFlags[row].Add(false); // not necessary to be boxFlags[row]
             }
         }
         
@@ -65,17 +84,9 @@ public class GameManager : MonoBehaviour
             {
                 if (sudoku[i][j] == 0)
                 {
-                    boxFlags[i][j] = true;
                     continue;
                 }
-
-                TextMeshProUGUI t = boxes[i][j].transform.GetChild(0).GetComponent<TextMeshProUGUI>();
-                t.text = sudoku[i][j].ToString();
-                t.fontSize = fontSize;
-                t.color = fixedNumberColor;
-                t.font = numberFont;
-
-                placedCount++;
+                PlaceNumberInButton(boxes[i][j],sudoku[i][j].ToString(),!boxFlags[i][j]);
             }
         }
     }
@@ -84,6 +95,11 @@ public class GameManager : MonoBehaviour
     {
         elapsedTime += Time.deltaTime;
         timeText.text = ConvertTime(elapsedTime);
+        if (elapsedTime > lastSaveTime)
+        {
+            lastSaveTime++;
+            PlayerPrefs.SetFloat("Time", elapsedTime);
+        }
     }
 
     private string ConvertTime(float f)
@@ -101,6 +117,87 @@ public class GameManager : MonoBehaviour
         return $"{hours}:{min}:{sec}";
     }
 
+    private string BoardToString(List<List<int>> b)
+    {
+        string s = "";
+
+        foreach (List<int> list in b)
+        {
+            foreach (int i in list)
+            {
+                s += $"{i},";
+            }
+        }
+        
+        return s.Substring(0,s.Length - 1);
+    }
+
+    private List<List<int>> StringToBoard(String s)
+    {
+        List<List<int>> empty = new List<List<int>>();
+        List<string> values = s.Split(',').ToList();
+        for (int i = 0; i < 9; i++)
+        {
+            List<int> dummy = new();
+            for (int j = 0; j < 9; j++)
+            {
+                dummy.Add(values[i * 9 + j][0] - 48);
+            }
+            empty.Add(dummy);
+        }
+        return empty;
+    }
+
+    private string FlagToString(List<List<bool>> b)
+    {
+        string s = "";
+
+        foreach (List<bool> list in b)
+        {
+            foreach (bool i in list)
+            {
+                s += $"{(i ? 1 : 0)},";
+            }
+        }
+        
+        return s.Substring(0,s.Length - 1);
+    }
+
+    private List<List<bool>> StringToFlag(string s)
+    {
+        List<List<bool>> empty = new List<List<bool>>();
+        List<string> values = s.Split(',').ToList();
+        for (int i = 0; i < 9; i++)
+        {
+            List<bool> dummy = new();
+            for (int j = 0; j < 9; j++)
+            {
+                dummy.Add(values[i * 9 + j][0] == '1');
+            }
+            empty.Add(dummy);
+        }
+        return empty;
+    }
+
+    private void SaveGame()
+    {
+        PlayerPrefs.SetInt("GameMode", GameState.gameMode);
+        PlayerPrefs.SetFloat("Time", elapsedTime);
+        PlayerPrefs.SetString("sudoku",BoardToString(sudoku));
+        PlayerPrefs.SetString("board",BoardToString(board));
+        PlayerPrefs.SetString("flags",FlagToString(boxFlags));
+        PlayerPrefs.Save();
+    }
+
+    private void LoadGame()
+    {
+        this.elapsedTime = PlayerPrefs.GetFloat("Time");
+        GameState.gameMode = PlayerPrefs.GetInt("GameMode");
+        sudoku = StringToBoard(PlayerPrefs.GetString("sudoku"));
+        board = StringToBoard(PlayerPrefs.GetString("board"));
+        boxFlags = StringToFlag(PlayerPrefs.GetString("flags"));
+    }
+    
     private Tuple<int,int> GetButtonIndices(GameObject b)
     {
         for (int i = 0; i < 9; i++)
@@ -154,19 +251,18 @@ public class GameManager : MonoBehaviour
         b.GetComponent<Image>().color = highlightColor;
     }
     
-
     public void PutNumber(Button b)
     {
         if (canBeChanged)
         {
-            TextMeshProUGUI t = highlightButton.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
-            if (t.text == "") placedCount++;
-            
-            t.text = b.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text;
-            t.fontSize = fontSize;
-            t.font = numberFont;
-            t.color = numberColor;
+            string text = b.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text;
+            PlaceNumberInButton(highlightButton.gameObject,text,false);
             HighlightButton(highlightButton);
+            
+            Tuple<int, int> tuple = GetButtonIndices(highlightButton.gameObject);
+            sudoku[tuple.Item1][tuple.Item2] = text[0] - 48;
+            
+            SaveGame();
             
             if(placedCount == 81) CheckGameState();
 
@@ -190,4 +286,22 @@ public class GameManager : MonoBehaviour
         Debug.Log("Congratulations. Game is over");
     }
 
+    private void PlaceNumberInButton(GameObject box, string text ,bool fixedNumber)
+    {
+        TextMeshProUGUI t = box.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
+        if (t.text == "") placedCount++;
+        
+        t.text = text;
+        t.fontSize = fontSize;
+        t.font = numberFont;
+
+        if (fixedNumber)
+        {
+            t.color = fixedNumberColor;
+        }
+        else
+        {
+            t.color = numberColor;
+        }
+    }
 }
