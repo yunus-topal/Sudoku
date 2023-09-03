@@ -4,10 +4,14 @@ using System.Linq;
 using DefaultNamespace;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
+    public TextMeshProUGUI endGameText;
+    public GameObject endGamePanel;
+    
     private float elapsedTime = 0f;
     private int lastSaveTime = 1;
     public TMP_Text timeText;
@@ -35,10 +39,32 @@ public class GameManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        endGamePanel.SetActive(false);
         int numCount = 40 - GameState.gameMode * 5;
 
         if (GameState.newGame)
         {
+            int count = 0;
+            switch (GameState.gameMode)
+            {
+                case 0:
+                    count = PlayerPrefs.GetInt("EasyAttempts");
+                    PlayerPrefs.SetInt("EasyAttempts", count + 1);
+                    break;
+                case 1:
+                    count = PlayerPrefs.GetInt("MediumAttempts");
+                    PlayerPrefs.SetInt("MediumAttempts", count + 1);
+                    break;
+                case 2:
+                    count = PlayerPrefs.GetInt("HardAttempts");
+                    PlayerPrefs.SetInt("HardAttempts", count + 1);
+                    break;
+                default:
+                    count = PlayerPrefs.GetInt("EasyAttempts");
+                    PlayerPrefs.SetInt("EasyAttempts", count + 1);
+                    break;
+            }
+            PlayerPrefs.Save();
             _sudokuLogic = gameObject.AddComponent<SudokuLogic>();
             Tuple<List<List<int>>, List<List<int>>> tuple = _sudokuLogic.GenerateSudoku(numCount);
             sudoku = tuple.Item1;
@@ -99,6 +125,7 @@ public class GameManager : MonoBehaviour
         {
             lastSaveTime++;
             PlayerPrefs.SetFloat("Time", elapsedTime);
+            PlayerPrefs.Save();
         }
     }
 
@@ -191,7 +218,7 @@ public class GameManager : MonoBehaviour
 
     private void LoadGame()
     {
-        this.elapsedTime = PlayerPrefs.GetFloat("Time");
+        elapsedTime = PlayerPrefs.GetFloat("Time");
         GameState.gameMode = PlayerPrefs.GetInt("GameMode");
         sudoku = StringToBoard(PlayerPrefs.GetString("sudoku"));
         board = StringToBoard(PlayerPrefs.GetString("board"));
@@ -283,7 +310,7 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-        Debug.Log("Congratulations. Game is over");
+        EndGame();
     }
 
     private void PlaceNumberInButton(GameObject box, string text ,bool fixedNumber)
@@ -318,5 +345,65 @@ public class GameManager : MonoBehaviour
             
             SaveGame();
         }
+    }
+
+    private void EndGame()
+    {
+        Debug.Log("Congratulations. Game is over");
+        PlayerPrefs.DeleteKey("sudoku");
+        PlayerPrefs.DeleteKey("board");
+        PlayerPrefs.DeleteKey("flags");
+        PlayerPrefs.Save();
+
+        int count = 0;
+        float avgTime = 0f;
+        string mode = "";
+        switch (GameState.gameMode)
+        {
+            case 0:
+                mode = "easy";
+                
+                count = PlayerPrefs.GetInt("EasyWins");
+                PlayerPrefs.SetInt("EasyWins",count + 1);
+                
+                avgTime = (PlayerPrefs.GetFloat("EasyWinTime") * count + elapsedTime) / (count + 1);
+                PlayerPrefs.SetFloat("EasyWinTime", avgTime);
+                break;
+            case 1:
+                mode = "medium";
+                
+                count = PlayerPrefs.GetInt("MediumWins");
+                PlayerPrefs.SetInt("MediumWins",count + 1);
+                
+                avgTime = (PlayerPrefs.GetFloat("MediumWinTime") * count + elapsedTime) / (count + 1);
+                PlayerPrefs.SetFloat("MediumWinTime", avgTime);
+                break;
+            case 2:
+                mode = "hard";
+                
+                count = PlayerPrefs.GetInt("HardWins");
+                PlayerPrefs.SetInt("HardWins",count + 1);
+                
+                avgTime = (PlayerPrefs.GetFloat("HardWinTime") * count + elapsedTime) / (count + 1);
+                PlayerPrefs.SetFloat("HardWinTime", avgTime);
+                break;
+            default:
+                mode = "easy";
+                
+                count = PlayerPrefs.GetInt("EasyWins");
+                PlayerPrefs.SetInt("EasyWins",count + 1);
+                
+                avgTime = (PlayerPrefs.GetFloat("EasyWinTime") * count + elapsedTime) / (count + 1);
+                PlayerPrefs.SetFloat("EasyWinTime", avgTime);
+                break;
+        }
+        PlayerPrefs.Save();
+        endGameText.text = $"Well Done!\nSudoku mode: {mode}\nTime: {ConvertTime(elapsedTime)}";
+        endGamePanel.SetActive(true);
+    }
+
+    public void LoadMenuScene()
+    {
+        SceneManager.LoadScene("MenuScene");
     }
 }
