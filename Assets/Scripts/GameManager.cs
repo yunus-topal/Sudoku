@@ -18,6 +18,7 @@ public class GameManager : MonoBehaviour
     
     private int placedCount = 0;
     public Toggle errorToggle;
+    public GameObject eraseMistakeButton;
     
     private int fontSize = 48;
     public TMP_FontAsset numberFont;
@@ -413,7 +414,8 @@ public class GameManager : MonoBehaviour
 
     public void HighlightMistakes()
     {
-   
+        eraseMistakeButton.SetActive(errorToggle.isOn);
+        
         for (int i = 0; i < 9; i++)
         {
             for (int j = 0; j < 9; j++)
@@ -426,7 +428,24 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
-        
+    }
 
+    public void EraseAllMistakes()
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                TextMeshProUGUI t = boxes[i][j].transform.GetChild(0).GetComponent<TextMeshProUGUI>();
+                if (t.text != "" && t.color == wrongNumberColor)
+                {
+                    t.text = "";
+                    t.color = numberColor;
+                    sudoku[i][j] = 0;
+                    placedCount--;
+                }
+            }
+        }
+        SaveGame();
     }
 }
