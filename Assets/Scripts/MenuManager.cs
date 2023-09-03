@@ -104,5 +104,11 @@ public class MenuManager : MonoBehaviour
         PlayerPrefs.SetInt("HardAttempts",0);
         
         SetStats();
+        
+        PlayerPrefs.DeleteKey("sudoku");
+        PlayerPrefs.DeleteKey("board");
+        PlayerPrefs.DeleteKey("flags");
+        PlayerPrefs.Save();
+        continueButton.interactable = false;
     }
 }
