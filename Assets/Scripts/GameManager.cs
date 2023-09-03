@@ -47,6 +47,8 @@ public class GameManager : MonoBehaviour
 
         if (GameState.newGame)
         {
+            errorToggle.isOn = false;
+            eraseMistakeButton.SetActive(false);
             int count = 0;
             switch (GameState.gameMode)
             {
@@ -118,6 +120,15 @@ public class GameManager : MonoBehaviour
                 PlaceNumberInButton(boxes[i][j],sudoku[i][j].ToString(),!boxFlags[i][j]);
             }
         }
+
+        if (PlayerPrefs.GetInt("ErrorToggle") == 1)
+        {
+            errorToggle.isOn = true;
+            eraseMistakeButton.SetActive(true);
+            HighlightMistakes();
+        }
+
+        
     }
 
     private void Update()
@@ -216,6 +227,7 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.SetString("sudoku",BoardToString(sudoku));
         PlayerPrefs.SetString("board",BoardToString(board));
         PlayerPrefs.SetString("flags",FlagToString(boxFlags));
+        PlayerPrefs.SetInt("ErrorToggle",errorToggle.isOn ? 1 : 0);
         PlayerPrefs.Save();
     }
 
@@ -415,7 +427,7 @@ public class GameManager : MonoBehaviour
     public void HighlightMistakes()
     {
         eraseMistakeButton.SetActive(errorToggle.isOn);
-        
+        PlayerPrefs.SetInt("ErrorToggle",(errorToggle.isOn ? 1 : 0));
         for (int i = 0; i < 9; i++)
         {
             for (int j = 0; j < 9; j++)
