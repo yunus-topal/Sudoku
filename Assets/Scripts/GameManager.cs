@@ -17,9 +17,11 @@ public class GameManager : MonoBehaviour
     public TMP_Text timeText;
     
     private int placedCount = 0;
-
+    public Toggle errorToggle;
+    
     private int fontSize = 48;
     public TMP_FontAsset numberFont;
+    private Color wrongNumberColor = Color.red;
     private Color numberColor = Color.blue;
     private Color fixedNumberColor = Color.black;
     
@@ -328,7 +330,9 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            t.color = numberColor;
+            Tuple<int, int> tuple = GetButtonIndices(box);
+            if (errorToggle.isOn && t.text != board[tuple.Item1][tuple.Item2].ToString()) t.color = wrongNumberColor;
+            else t.color = numberColor;
         }
     }
 
@@ -405,5 +409,24 @@ public class GameManager : MonoBehaviour
     public void LoadMenuScene()
     {
         SceneManager.LoadScene("MenuScene");
+    }
+
+    public void HighlightMistakes()
+    {
+   
+        for (int i = 0; i < 9; i++)
+        {
+            for (int j = 0; j < 9; j++)
+            {
+                TextMeshProUGUI t = boxes[i][j].transform.GetChild(0).GetComponent<TextMeshProUGUI>();
+                if (t.text != "0" && t.text != board[i][j].ToString())
+                {
+                    if (errorToggle.isOn) t.color = wrongNumberColor;
+                    else t.color = numberColor;
+                }
+            }
+        }
+        
+
     }
 }
