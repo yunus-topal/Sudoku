@@ -30,6 +30,7 @@ public class GameManager : MonoBehaviour
     private bool canBeChanged = true;
     private Color highlightColor = new Color(0.2f, 1f, 1f, 1f);
     private Color sameNumColor = new Color(0.75f, 1f, 1f, 1f);
+    private Color noHightlightColor = Color.white;
     
     private SudokuLogic _sudokuLogic;
     private List<List<int>> sudoku;
@@ -264,8 +265,8 @@ public class GameManager : MonoBehaviour
             foreach (GameObject o in box)
             {
                 TextMeshProUGUI t = o.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
-                if (t.text != number) o.GetComponent<Image>().color  = Color.white;
-                else o.GetComponent<Image>().color  = sameNumColor;
+                if (t.text != number) o.GetComponent<Image>().color = noHightlightColor;
+                else o.GetComponent<Image>().color = sameNumColor;
             }
         }
     }
@@ -276,7 +277,7 @@ public class GameManager : MonoBehaviour
         {
             foreach (GameObject o in box)
             {
-                o.GetComponent<Image>().color = Color.white;
+                o.GetComponent<Image>().color = noHightlightColor;
             }
         }
     }
@@ -444,11 +445,15 @@ public class GameManager : MonoBehaviour
 
     public void EraseAllMistakes()
     {
+        highlightButton = null;
+        canBeChanged = false;
         for (int i = 0; i < 9; i++)
         {
             for (int j = 0; j < 9; j++)
             {
+                boxes[i][j].GetComponent<Image>().color = noHightlightColor;
                 TextMeshProUGUI t = boxes[i][j].transform.GetChild(0).GetComponent<TextMeshProUGUI>();
+                
                 if (t.text != "" && t.color == wrongNumberColor)
                 {
                     t.text = "";
