@@ -346,7 +346,7 @@ public class SudokuLogic : MonoBehaviour
             locations.RemoveAt(locations.Count - 1);
             placed -= tuple.Item1;
         }
-        Debug.Log(locations.Count);
+        //Debug.Log(locations.Count);
 
         return board;
     }
@@ -359,7 +359,7 @@ public class SudokuLogic : MonoBehaviour
         
         //PrintDoubleList(board);
         //Debug.Log("SAAAAAAAAAAAAAAAAAAAA");
-        PrintDoubleList(sudoku);
+        //PrintDoubleList(sudoku);
         
         return new Tuple<List<List<int>>, List<List<int>>>(sudoku, board);
     }

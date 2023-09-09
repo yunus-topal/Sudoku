@@ -15,7 +15,8 @@ public class GameManager : MonoBehaviour
     private float elapsedTime = 0f;
     private int lastSaveTime = 1;
     public TMP_Text timeText;
-    
+
+    private int[] indexCounts = {0,0,0,0,0,0,0,0,0,0};
     private int placedCount = 0;
     public Toggle errorToggle;
     public GameObject eraseMistakeButton;
@@ -249,7 +250,7 @@ public class GameManager : MonoBehaviour
             {
                 if (boxes[i][j].Equals(b))
                 {
-                    Debug.Log($"found index {i}, {j}");
+                    //Debug.Log($"found index {i}, {j}");
                     return new Tuple<int, int>(i, j);
                 }
             }
@@ -332,7 +333,15 @@ public class GameManager : MonoBehaviour
     private void PlaceNumberInButton(GameObject box, string text ,bool fixedNumber)
     {
         TextMeshProUGUI t = box.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
+        // adjust counts
         if (t.text == "") placedCount++;
+        else
+        {
+            indexCounts[t.text[0] - 48]--;
+        }
+        indexCounts[text[0] - 48]++;
+        
+        AdjustNumberButtons();
         
         t.text = text;
         t.fontSize = fontSize;
@@ -352,14 +361,18 @@ public class GameManager : MonoBehaviour
 
     public void EraseNumber()
     {
-        if (canBeChanged && highlightButton.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text != "")
+        TextMeshProUGUI t = highlightButton.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
+        if (canBeChanged && t.text != "")
         {
-            highlightButton.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = "";
-            HighlightButton(highlightButton);
+            placedCount--;
+            indexCounts[t.text[0] - 48]--;
+            AdjustNumberButtons();
             
             Tuple<int, int> tuple = GetButtonIndices(highlightButton.gameObject);
             sudoku[tuple.Item1][tuple.Item2] = 0;
-            placedCount--;
+            
+            t.text = "";
+            HighlightButton(highlightButton);
             
             SaveGame();
         }
@@ -456,13 +469,28 @@ public class GameManager : MonoBehaviour
                 
                 if (t.text != "" && t.color == wrongNumberColor)
                 {
+                    placedCount--;
+                    indexCounts[t.text[0] - 48]--;
+                    
                     t.text = "";
                     t.color = numberColor;
                     sudoku[i][j] = 0;
-                    placedCount--;
                 }
             }
         }
+        AdjustNumberButtons();
         SaveGame();
+    }
+
+    private void AdjustNumberButtons()
+    {
+        GameObject[] numbersParent = GameObject.FindGameObjectsWithTag("numbers");
+        foreach (GameObject o in numbersParent)
+        {
+            TextMeshProUGUI t =  o.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
+            o.GetComponent<Button>().interactable = indexCounts[t.text[0] - 48] != 9;
+            Debug.Log("text value: " + t.text);
+            Debug.Log(indexCounts[t.text[0] - 48]);
+        }
     }
 }
